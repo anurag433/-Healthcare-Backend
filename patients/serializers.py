@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Patient
+from .models import Patient, PatientDoctorMapping
+from doctors.models import Doctor
 
 class PatientSerializers(serializers.ModelSerializer):
 
@@ -38,3 +39,34 @@ class PatientSerializers(serializers.ModelSerializer):
                 "Age must be greater than 0"
             )
        return value
+    
+
+class AssginDoctorSerializer(serializers.Serializer):
+    
+    patient_id = serializers.IntegerField()
+    doctor_id = serializers.IntegerField()
+
+    def validate_patient_id(self, value):
+        if not Patient.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                "Patient not exist"
+            )
+        return value
+    
+    def validate_doctor_id(self, value):
+        if not Doctor.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                "Doctor not exist"
+            )
+        return value
+    
+    def validate(self, attrs):
+        if PatientDoctorMapping.objects.filter(
+            patient_id=attrs["patient_id"],
+            doctor_id=attrs["doctor_id"]
+        ).exists():
+            raise serializers.ValidationError(
+                "Mapping already exists"
+            )
+
+        return attrs

@@ -50,7 +50,6 @@ class DoctorAPIView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
     def put(self, request, id):
         doctor = self.get_object(id, request.user)
         if not doctor:

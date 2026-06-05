@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from doctors.models import Doctor
 
 class Patient(models.Model):
     GENDER = [
@@ -15,3 +16,18 @@ class Patient(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class PatientDoctorMapping(models.Model):
+
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="doctor_mapping")
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name="patient_mapping")
+
+    assgined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("patient", "doctor")
+
+    def __str__(self):
+        return f"{self.patient} -> {self.doctor}"
+

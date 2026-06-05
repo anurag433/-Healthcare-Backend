@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
-from .models import Patient
-from .serializers import PatientSerializers
+from .models import Patient, PatientDoctorMapping
+from .serializers import PatientSerializers, AssginDoctorSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 class PatientAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -91,3 +92,68 @@ class PatientAPIView(APIView):
             status=status.HTTP_200_OK
         )
 
+class MappingAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        mappings = PatientDoctorMapping.objects.select_related("patient","doctor" )
+        data = []
+        for mapping in mappings:
+            data.append({
+                "id": mapping.id,
+                "patient": mapping.patient.name,
+                "doctor": mapping.doctor.name
+            })
+        return Response(data)
+
+    def post(self, request):
+
+        serializer = AssginDoctorSerializer(data=request.data)
+        serializer.is_valid(
+            raise_exception=True
+        )
+        mapping = PatientDoctorMapping.objects.create(
+            patient_id=serializer.validated_data["patient_id"],
+            doctor_id=serializer.validated_data["doctor_id"]
+        )
+        return Response(
+            {
+                "message": "Doctor assigned",
+                "mapping_id": mapping.id
+            },
+            status=201
+        )
+class MappingDetailAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Patient,id=patient_id)
+        mappings = (PatientDoctorMapping.objects.filter(patient=patient).select_related("doctor"))
+        doctors = []
+
+        for mapping in mappings:
+            doctors.append(
+                {
+                    "id": mapping.doctor.id,
+                    "name": mapping.doctor.name
+                }
+            )
+        return Response(
+            {
+                "patient": patient.name,
+                "doctors": doctors
+            }
+        )
+    def delete(self, request, patient_id):
+
+        mapping = get_object_or_404(
+            PatientDoctorMapping,
+            id=patient_id
+        )
+        mapping.delete()
+        return Response(
+            {
+                "message": "Mapping removed"
+            }
+        )
