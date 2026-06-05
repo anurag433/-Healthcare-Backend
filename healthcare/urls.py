@@ -9,5 +9,6 @@ urlpatterns = [
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('patients.urls')),
+    path('api/', include('doctors.urls')),
     
 ]
